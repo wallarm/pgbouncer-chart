@@ -1,0 +1,121 @@
+{{/* vim: set filetype=mustache: */}}
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "pgbouncer.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "pgbouncer.name" . }}
+    helm.sh/chart: {{ include "pgbouncer.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "pgbouncer.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "pgbouncer.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.pgbouncerExporter.port }}"
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml .Values.imagePullSecrets | indent 8 | trim }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "pgbouncer.fullname" . }}-configmap
+        - name: userlist
+          secret:
+            secretName: {{ include "pgbouncer.fullname" . }}-userlist-secret
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgbouncer/
+            - name: userlist
+              mountPath: /etc/userlist/
+          ports:
+            - name: psql
+              containerPort: {{ include "pgbouncerContainerPort" . }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: {{ include "pgbouncerContainerPort" . }}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          resources:
+            {{ toYaml .Values.resources | indent 12 | trim }}
+        - name: {{ .Chart.Name }}-{{.Values.pgbouncerConfigReload.name }}
+          image: "{{ .Values.pgbouncerConfigReload.image.repository }}:{{ .Values.pgbouncerConfigReload.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgbouncer/
+            - name: userlist
+              mountPath: /etc/userlist/
+          env:
+          - name: CONFIG_PATH
+            value: /etc/pgbouncer;/etc/userlist
+          - name: PGBOUNCER_HOST
+            value: 127.0.0.1
+          - name: PGBOUNCER_PORT
+            value: {{ include "pgbouncerContainerPort" . | quote }}
+          - name: PGBOUNCER_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "pgbouncer.fullname" . }}-secret
+                key: adminUser
+          - name: PGBOUNCER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "pgbouncer.fullname" . }}-secret
+                key: adminPassword
+          - name: LOG_JSON
+            value: {{ .Values.pgbouncerConfigReload.logJson | quote }}
+          - name: PGBOUNCER_RELOAD_TIMEOUT
+            value: {{ .Values.pgbouncerConfigReload.reloadTimeout | quote }} 
+        - name: {{ .Chart.Name }}-{{ .Values.pgbouncerExporter.name }}
+          image: "{{ .Values.pgbouncerExporter.image.repository }}:{{ .Values.pgbouncerExporter.image.tag }}"
+          imagePullPolicy: {{ .Values.pgbouncerExporter.image.pullPolicy }}
+          env:
+          - name: PGBOUNCER_EXPORTER_HOST
+            value: 0.0.0.0
+          - name: PGBOUNCER_EXPORTER_PORT
+            value: {{ .Values.pgbouncerExporter.port | quote }}
+          - name: PGBOUNCER_PORT
+            value: {{ include "pgbouncerContainerPort" . | quote }}
+          - name: PGBOUNCER_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "pgbouncer.fullname" . }}-secret
+                key: adminUser
+          - name: PGBOUNCER_PASS 
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "pgbouncer.fullname" . }}-secret
+                key: adminPassword
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.pgbouncerExporter.port }}
+              protocol: TCP
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

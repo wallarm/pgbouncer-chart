@@ -1,0 +1,28 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get {{ .Release.Name }}
+
+{{- if .Values.config.authUser }}
+
+Configure PostgreSQL for authProxy:
+CREATE ROLE {{ .Values.config.authUser }} WITH SUPERUSER LOGIN PASSWORD '{{ .Values.config.authPassword }}';
+{{- end }}
+
+For connect to PostgreSQL use command:
+
+  psql "host={{ include "pgbouncer.fullname" . }}.{{ .Release.Namespace }} \
+        port={{ .Values.service.port }} \
+        dbname=<some_db_name> \
+        user=<some_db_user>"
+
+For access Pgbouncer admin use command:
+
+  kubectl -n {{ .Release.Namespace }} exec -ti \
+        -c {{ include "pgbouncer.fullname" . }}-control \
+        $(kubectl -n pgbouncer get po -l app.kubernetes.io/name=pgbouncer --no-headers -o custom-columns=":metadata.name") \
+        pgbouncerctl
