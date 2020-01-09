@@ -23,12 +23,6 @@ service:
 ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
 resources: {}
- # limits:
- #   cpu: 10m
- #   memory: 32Mi
- # requests:
- #   cpu: 10m
- #   memory: 32Mi
 
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
@@ -62,7 +56,7 @@ config:
 #    max_client_conn: 1024
 #    default_pool_size: 20
   userlist: {}
-   # <USERNAME>: <PASSWORD> 
+   # <USERNAME>: <PASSWORD>
 
 
 ## pgbouncer config reload container image and configuration
@@ -75,7 +69,13 @@ pgbouncerConfigReload:
     repository: wallarm/pgbouncer-config-reload
     tag: 1.0.0
     pullPolicy: IfNotPresent
-
+  resources:
+    limits:
+      cpu: 20m
+      memory: 24Mi
+    requests:
+      cpu: 10m
+      memory: 12Mi
 ## pgbouncer exporter container image and configuration
 ##
 pgbouncerExporter:
@@ -85,3 +85,10 @@ pgbouncerExporter:
     repository: spreaker/prometheus-pgbouncer-exporter
     tag: 2.0.1
     pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 20m
+      memory: 42Mi
+    requests:
+      cpu: 10m
+      memory: 21Mi

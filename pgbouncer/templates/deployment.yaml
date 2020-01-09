@@ -82,7 +82,9 @@ spec:
           - name: LOG_JSON
             value: {{ .Values.pgbouncerConfigReload.logJson | quote }}
           - name: PGBOUNCER_RELOAD_TIMEOUT
-            value: {{ .Values.pgbouncerConfigReload.reloadTimeout | quote }} 
+            value: {{ .Values.pgbouncerConfigReload.reloadTimeout | quote }}
+          resources:
+            {{ toYaml  .Values.pgbouncerConfigReload.resources | indent 12 | trim }}
         - name: {{ .Chart.Name }}-{{ .Values.pgbouncerExporter.name }}
           image: "{{ .Values.pgbouncerExporter.image.repository }}:{{ .Values.pgbouncerExporter.image.tag }}"
           imagePullPolicy: {{ .Values.pgbouncerExporter.image.pullPolicy }}
@@ -98,11 +100,13 @@ spec:
               secretKeyRef:
                 name: {{ include "pgbouncer.fullname" . }}-secret
                 key: adminUser
-          - name: PGBOUNCER_PASS 
+          - name: PGBOUNCER_PASS
             valueFrom:
               secretKeyRef:
                 name: {{ include "pgbouncer.fullname" . }}-secret
                 key: adminPassword
+          resources:
+            {{ toYaml .Values.pgbouncerExporter.resources | indent 12 | trim }}
           ports:
             - name: metrics
               containerPort: {{ .Values.pgbouncerExporter.port }}
