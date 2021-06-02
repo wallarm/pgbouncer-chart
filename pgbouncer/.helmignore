@@ -24,4 +24,5 @@
 *.tmproj
 
 # Builded charts
+values.*.yaml
 *.tgz
