@@ -1,0 +1,75 @@
+{{- if .Values.podSecurityPolicy.enabled }}
+apiVersion: {{ template "podSecurityPolicy.apiVersion" . }}
+kind: PodSecurityPolicy
+metadata:
+  name: {{ include "pgbouncer.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "pgbouncer.name" . }}
+    helm.sh/chart: {{ template "pgbouncer.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  {{ if len .Values.podSecurityPolicy.allowedCapabilities -}}
+  allowedCapabilities: {{ .Values.podSecurityPolicy.allowedCapabilities | toYaml | trimSuffix "\n" | nindent 2 }}
+  {{ end -}}
+  privileged: {{ .Values.podSecurityPolicy.privileged }}
+  allowPrivilegeEscalation: {{ .Values.podSecurityPolicy.allowPrivilegeEscalation }}
+  {{ if len .Values.podSecurityPolicy.volumes -}}
+  volumes: {{ .Values.podSecurityPolicy.volumes | toYaml | trimSuffix "\n" | nindent 2 }}
+  {{ end -}}
+  hostNetwork: {{ .Values.podSecurityPolicy.hostNetwork }}
+  hostIPC: {{ .Values.podSecurityPolicy.hostIPC }}
+  hostPID: {{ .Values.podSecurityPolicy.hostPID }}
+  {{ if .Values.podSecurityPolicy.runAsUser -}}
+  runAsUser: {{ .Values.podSecurityPolicy.runAsUser | toYaml | trimSuffix "\n" | nindent 4 }}
+  {{ end -}}
+  {{ if .Values.podSecurityPolicy.supplementalGroups -}}
+  supplementalGroups: {{ .Values.podSecurityPolicy.supplementalGroups | toYaml | trimSuffix "\n" | nindent 4 }}
+  {{ end -}}
+  {{ if .Values.podSecurityPolicy.fsGroup -}}
+  fsGroup: {{ .Values.podSecurityPolicy.fsGroup | toYaml | trimSuffix "\n" | nindent 4 }}
+  {{ end -}}
+  {{ if .Values.podSecurityPolicy.seLinux -}}
+  seLinux: {{ .Values.podSecurityPolicy.seLinux | toYaml | trimSuffix "\n" | nindent 4 }}
+  {{ end -}}
+  {{ if .Values.podSecurityPolicy.additionalRestrictions -}}
+  {{ .Values.podSecurityPolicy.additionalRestrictions | toYaml | trimSuffix "\n" | indent 2 | trimPrefix "  " }}
+  {{- end }}
+
+---
+apiVersion: {{ template "role.apiVersion" . }}
+kind: Role
+metadata:
+  name: {{ include "pgbouncer.fullname" . }}-psp
+  labels:
+    app.kubernetes.io/name: {{ template "pgbouncer.name" . }}
+    helm.sh/chart: {{ template "pgbouncer.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - {{ template "pgbouncer.fullname" . }}
+
+---
+apiVersion: {{ template "roleBinding.apiVersion" . }}
+kind: RoleBinding
+metadata:
+  name: {{ include "pgbouncer.fullname" . }}-psp
+  labels:
+    app.kubernetes.io/name: {{ template "pgbouncer.name" . }}
+    helm.sh/chart: {{ template "pgbouncer.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "pgbouncer.fullname" . }}-psp
+subjects:
+- kind: ServiceAccount
+  name: {{ template "pgbouncer.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+
+{{- end }}
