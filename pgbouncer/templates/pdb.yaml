@@ -1,0 +1,17 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: {{ template "podDisruptionBudget.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "pgbouncer.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "pgbouncer.name" . }}
+    helm.sh/chart: {{ template "pgbouncer.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "pgbouncer.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+{{- end }}

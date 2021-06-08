@@ -45,6 +45,97 @@ Create content for userlist.txt secret
 {{- end }}
 
 {{/*
-Constanta for define pgbouncer container port
+Create the name of the service account to use
 */}}
-{{ define "pgbouncerContainerPort" }}5432{{ end }}
+{{- define "pgbouncer.serviceAccountName" -}}
+{{- if not .Values.serviceAccount.name -}}
+{{ template "pgbouncer.fullname" . }}
+{{- else -}}
+{{- .Values.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Contruct and return the image to use
+*/}}
+{{- define "pgbouncer.image" -}}
+{{- if not .Values.image.registry -}}
+{{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
+{{- else -}}
+{{ printf "%s/%s:%s" .Values.image.registry .Values.image.repository .Values.image.tag }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Contruct and return the exporter image to use
+*/}}
+{{- define "pgbouncer.exporterImage" -}}
+{{- if not .Values.pgbouncerExporter.image.registry -}}
+{{ printf "%s:%s" .Values.pgbouncerExporter.image.repository .Values.pgbouncerExporter.image.tag }}
+{{- else -}}
+{{ printf "%s/%s:%s" .Values.pgbouncerExporter.image.registry .Values.pgbouncerExporter.image.repository .Values.pgbouncerExporter.image.tag }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for deployment.
+*/}}
+{{- define "deployment.apiVersion" -}}
+{{- if .Capabilities.APIVersions.Has "apps/v1/Deployment" -}}
+{{- print "apps/v1" -}}
+{{- else -}}
+{{- print "extensions/v1beta1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for PodSecurityPolicy kind of objects.
+*/}}
+{{- define "podSecurityPolicy.apiVersion" -}}
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy" -}}
+{{- print "policy/v1beta1" -}}
+{{- else -}}
+{{- print "extensions/v1beta1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for PodDisruptionBudget kind of objects.
+*/}}
+{{- define "podDisruptionBudget.apiVersion" -}}
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodDisruptionBudget" -}}
+{{- print "policy/v1beta1" -}}
+{{- else -}}
+{{- print "extensions/v1beta1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for Role kind of objects.
+*/}}
+{{- define "role.apiVersion" -}}
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1/Role" -}}
+{{- print "rbac.authorization.k8s.io/v1" -}}
+{{- else -}}
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1beta1/Role" -}}
+{{- print "rbac.authorization.k8s.io/v1beta1" -}}
+{{- else -}}
+{{- print "rbac.authorization.k8s.io/v1alpha1" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for RoleBinding kind of objects.
+*/}}
+{{- define "roleBinding.apiVersion" -}}
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1/RoleBinding" -}}
+{{- print "rbac.authorization.k8s.io/v1" -}}
+{{- else -}}
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1beta1/RoleBinding" -}}
+{{- print "rbac.authorization.k8s.io/v1beta1" -}}
+{{- else -}}
+{{- print "rbac.authorization.k8s.io/v1alpha1" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

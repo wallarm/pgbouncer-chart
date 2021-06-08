@@ -33,6 +33,9 @@ config:
       port: 6432
   pgbouncer:
     server_tls_sslmode: prefer
+    max_client_conn: 500
+    ignore_startup_parameters: extra_float_digits
+    pool_mode: transaction
   userlist:
     <DBUser1>: <md5MD5HashOfPassword1>
     <DBUser2>: <md5MD5HashOfPassword2>
@@ -46,38 +49,46 @@ The following table lists the configurable parameters of the Prometheus chart an
 
 Parameter | Description | Default
 --------- | ----------- | -------
-`replicaCount`      | desired number of pgbouncer pods | `1`
-`imagePullSecrets`  | container image pull secrets | `[]`
-`image.repository`  | pgbouncer container image repository | `wallarm/pgbouncer`
-`image.tag`         | pgbouncer container image tag | `0.3.0`
-`image.pullPolicy`  | pgbouncer container image pull policy | `IfNotPresent`
-`nameOverride`      | override .Chart.Name with this name | `""`
-`fullnameOverride`  | override fullname with this name | `""`
-`service.type`      | type of pgbouncer service to create | `ClusterIP`
-`service.port`      | pgbouncer headless service port | `5432`
-`resources`         | pgbouncer pod resource requests & limits | `{}`
-`nodeSelector`      | node labels for pgbouncer pod assignment | `{}`
-`tolerations`       | node taints to tolerate (requires Kubernetes >=1.6) | `[]`
-`affinity`          | pod affinity | `{}`
+`replicaCount`      | Desired number of pgbouncer pods | `1`
+`updateStrategy`    | Deploy strategy of the Deployment | `{}`
+`minReadySeconds`   | Interval between discrete pods transitions | `0`
+`revisionHistoryLimit` | Rollback limit | `10`
+`imagePullSecrets`  | Container image pull secrets | `[]`
+`image.registry`    | Pgbouncer container image registry | `""`
+`image.repository`  | Pgbouncer container image repository | `pgbouncer/pgbouncer`
+`image.tag`         | Pgbouncer container image tag | `1.15.0`
+`image.pullPolicy`  | Pgbouncer container image pull policy | `IfNotPresent`
+`service.type`      | Type of pgbouncer service to create | `ClusterIP`
+`service.port`      | Pgbouncer service port | `5432`
+`podLabels`         | Labels to add to the pod metadata | `{}`
+`podAnnotations`    | Annotations to add to the pod metadata | `{}`
+`extraEnvs`         | Additional environment variables to set | `[]`
+`resources`         | Pgbouncer pod resource requests & limits | `{}`
+`nodeSelector`      | Node labels for pgbouncer pod assignment | `{}`
+`lifecycle`         | Lifecycle hooks | `{}`
+`tolerations`       | Node taints to tolerate (requires Kubernetes >=1.6) | `[]`
+`affinity`          | Pod affinity | `{}`
+`priorityClassName` | Priority of pods | `""`
+`runtimeClassName`  | Runtime class for pods | `""`
 `config.adminUser`  | Set pgbouncer `admin_user` option. `admin_user` - database user that are allowed to connect and run all commands on console. | `admin`
-`config.adminPassword` | Set password for `admin_user` | `""`
+`config.adminPassword` | Set password for `admin_user` | `""`, required
 `config.authUser`   | Set pgbouncer `auth_user` option. If `auth_user` is set, any user not specified in `auth_file` will be queried through the `auth_query` query from `pg_shadow` in the database using `auth_user` | `""`
 `config.authPassword` | Set password for `auth_user` | `""`
 `config.databases`  | Dict of database connections string described in section `[databases]` in pgbouncer.ini file | `{}`
 `config.pgbouncer`  | Dict of pgbouncer options described in section `[pgbouncer]` in pgbouncer.ini file | 
-`config.pgbouncer.auth_type` | Set option `auth_type` | `md5`
-`config.pgbouncer.pool_mode` | Set option `pool_mode` | `transaction`
-`config.pgbouncer.max_client_conn` | Set option `max_client_conn` | `1024`
-`config.pgbouncer.default_pool_size` | Set option `default_pool_size` | `20`
 `config.userlist`   | Dict of users for `userlist.txt` file | `{}`
-`pgbouncerConfigReload.name` | pgbouncer config reload container name suffix | `control`
-`pgbouncerConfigReload.reloadTimeout` | timeout between get creation event and reload pgbouncer | `10`
-`pgbouncerConfigReload.logJson` | write log in json format. Accept values 0 and 1 | `1`
-`pgbouncerConfigReload.image.repository` | pgbouncer config reload repository | `wallarm/pgbouncer-config-reload`
-`pgbouncerConfigReload.image.tag` | pgbouncer config reload version | `1.0.0`
-`pgbouncerConfigReload.image.pullPolicy` | pgbouncer config reload policy | `IfNotPresent`
-`pgbouncerExporter.name` | pgbouncer exporter container name suffix | `exporter`
-`pgbouncerExporter.port` | pgbouncer exporter port | `9127`
-`pgbouncerExporter.image.repository` | pgbouncer exporter image repository | `spreaker/prometheus-pgbouncer-exporter`
-`pgbouncerExporter.image.tag` | pgbouncer exporter image tag | `2.0.1`
-`pgbouncerExporter.image.pullPolicy` | pgbouncer exporter image pull policy | `IfNotPresent`
+`extraContainers`   | Additional containers to be added to the pods | `[]`
+`extraInitContainers` | Containers, which are run before the app containers are started | `[]`
+`extraVolumeMounts` | Additional volumeMounts to the main container | `[]`
+`extraVolumes`      | Additional volumes to the pods | `[]`
+`pgbouncerExporter.enabled` | Enables pgbouncer exporter in pod | `false`
+`pgbouncerExporter.port` | Pgbouncer exporter port | `9127`
+`pgbouncerExporter.image.registry` | Pgbouncer exporter image registry | `""`
+`pgbouncerExporter.image.repository` | Pgbouncer exporter image repository | `prometheuscommunity/pgbouncer-exporter`
+`pgbouncerExporter.image.tag` | Pgbouncer exporter image tag | `2.0.1`
+`pgbouncerExporter.image.pullPolicy` | Pgbouncer exporter image pull policy | `IfNotPresent`
+`pgbouncerExporter.resources` | Pgbouncer exporter resources | `{"limits":{"cpu":"250m","memory":"150Mi"},"requests":{"cpu":"30m","memory":"40Mi"}}`
+`podSecurityPolicy.enabled` | Enables PodSecurityPolicy object creation | `false`
+`podDisruptionBudget.enabled` | Enables PodDisruptionBudget object creation | `true`
+`serviceAccount.name` | Kubernetes ServiceAccount for service. Creates new if empty | `""`
+`serviceAccount.annotations` | Annotations to set for ServiceAccount | `{}`
