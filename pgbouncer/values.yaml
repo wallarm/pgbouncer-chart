@@ -34,7 +34,7 @@ imagePullSecrets: []
 image:
   registry: ""
   repository: pgbouncer/pgbouncer
-  tag: 1.15.0
+  tag: '' # Overrides the tag whose default is the .Chart.appVersion
   pullPolicy: IfNotPresent
 
 ## Service configuration
