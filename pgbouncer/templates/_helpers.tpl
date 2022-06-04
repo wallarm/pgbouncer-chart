@@ -103,10 +103,10 @@ Return the appropriate apiVersion for PodSecurityPolicy kind of objects.
 Return the appropriate apiVersion for PodDisruptionBudget kind of objects.
 */}}
 {{- define "podDisruptionBudget.apiVersion" -}}
-{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodDisruptionBudget" -}}
-{{- print "policy/v1beta1" -}}
+{{- if .Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget" -}}
+{{- print "policy/v1" -}}
 {{- else -}}
-{{- print "extensions/v1beta1" -}}
+{{- print "policy/v1beta1" -}}
 {{- end -}}
 {{- end -}}
 
