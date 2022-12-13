@@ -43,6 +43,7 @@ image:
 service:
   type: ClusterIP
   port: 5432
+  annotations: {}
 
 ## Labels to add to the pod metadata
 ##
