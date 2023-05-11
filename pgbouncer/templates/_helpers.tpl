@@ -60,9 +60,9 @@ Contruct and return the image to use
 */}}
 {{- define "pgbouncer.image" -}}
 {{- if not .Values.image.registry -}}
-{{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
+{{ printf "%s:%s" .Values.image.repository ( default .Chart.AppVersion .Values.image.tag ) }}
 {{- else -}}
-{{ printf "%s/%s:%s" .Values.image.registry .Values.image.repository .Values.image.tag }}
+{{ printf "%s/%s:%s" .Values.image.registry .Values.image.repository ( default .Chart.AppVersion .Values.image.tag ) }}
 {{- end -}}
 {{- end -}}
 
